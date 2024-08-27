@@ -1,0 +1,318 @@
+{% extends 'chat/app.html' %}
+{% block title %}Чат{% endblock %}
+{% block content %}
+<style>
+        .chat-container {
+            border: 1px solid #ccc;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .message .user {
+            font-weight: bold;
+        }
+        .message .text {
+            display: inline-block;
+            background: #f1f1f1;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+        .message-input {
+            margin-top: 15px;
+        }
+    </style>
+<h2>Чат</h2>
+<!-- Интерфейс чата -->
+    <div class="dropdown">
+        <ul>
+            {% for user in all_users %}
+            <li><a class="dropdown-item" href="/add_user/{{current_chat.id}}/{{user.id}}">{{user.login}}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <section class="container my-5">
+        <h2 class="text-center">Чат сообщений</h2>
+        <div>
+            {% if request.session.user == current_chat.creator.login %}
+                <a class="nav-link" href="#" data-toggle="modal" data-target="#chatsettings">Управление чатом</a>
+            {% else %}
+
+            {% endif %}
+        </div>
+        <div class="chat-container" id="chatContainer">
+            {% for m in messages %}
+                {% if m.user.login == request.session.user %}
+                    <div class="message bg-secondary-subtle">
+                        <span class="user">{{m.user.login}}:</span>
+                        <span class="text">{{m.text}}</span>
+                    </div>
+                {% else %}
+                    <div class="message">
+                        <span class="user">{{m.user.login}}:</span>
+                        <span class="text">{{m.text}}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+       <div class="message-input">
+            <input type="text" class="form-control enter_click" id="messageInput" placeholder="Введите сообщение">
+            <input type="file" class="form-control mt-3" name="file" id="file">
+
+            <!-- New Record Button -->
+            <button class="btn btn-secondary mt-2" id="recordButton">🔴 Record</button>
+            <audio id="audioPlayback" controls style="display:none;"></audio>
+
+            <button class="btn btn-primary mt-2" onclick="sendMessage()">Отправить</button>
+        </div>
+
+    </section>
+<script>
+   let socket;
+   let socket_online;
+   let messageQueue = [];
+
+   function connectWebSocket() {
+       socket = new WebSocket('ws://127.0.0.1:8000/ws');
+       socket_online = new WebSocket('ws://127.0.0.1:8000/online');
+
+       socket.onopen = function(e) {
+           console.log('WebSocket is open now.');
+           while (messageQueue.length > 0) {
+               let queuedMessage = messageQueue.shift();
+               socket.send(queuedMessage);
+           }
+           setInterval(function() {
+               if (socket.readyState === WebSocket.OPEN) {
+                   socket.send(JSON.stringify({
+                       message: 'list',
+                       chat: {{current_chat.id}},
+                       user: '{{request.session.user}}'
+                   }));
+               }
+           }, 1000);
+       };
+
+       socket_online.onopen = function(e) {
+           console.log('WebSocket for online status is open now.');
+           setInterval(function() {
+               if (socket_online.readyState === WebSocket.OPEN) {
+                   socket_online.send(JSON.stringify({
+                       message: 'list',
+                       chat: {{current_chat.id}}
+                   }));
+               }
+           }, 1000);
+       };
+
+       socket.onmessage = function(event) {
+           try {
+               document.getElementById('chatContainer').innerHTML = JSON.parse(event['data'])['message'];
+               console.log(JSON.parse(event['data']));
+           } catch (e) {
+               console.log('Error:', e.message);
+           }
+       };
+
+       socket_online.onmessage = function(event) {
+           let data = JSON.parse(event['data'])['message'];
+           document.getElementById('users_online').innerHTML = data;
+       };
+
+       socket.onclose = function(e) {
+           console.log('WebSocket is closed now. Reconnecting...');
+           setTimeout(connectWebSocket, 1000);
+       };
+
+       socket.onerror = function(error) {
+           console.log('WebSocket error: ' + error.message);
+       };
+
+       socket_online.onclose = function(e) {
+           console.log('WebSocket for online status is closed now. Reconnecting...');
+           setTimeout(connectWebSocket, 1000);
+       };
+
+       socket_online.onerror = function(error) {
+           console.log('WebSocket error for online status: ' + error.message);
+       };
+   }
+
+   connectWebSocket();
+
+   var chatContainer = document.getElementById('chatContainer');
+   chatContainer.scrollTop = chatContainer.scrollHeight;
+
+   function sendMessage() {
+       var messageInput = document.getElementById('messageInput');
+       var messageText = messageInput.value.trim();
+       var fileInput = document.getElementById('file');
+       var file = fileInput.files[0];
+
+       var data = {
+           message: messageText,
+           user: '{{request.session.user}}',
+           chat: {{current_chat.id}}
+       };
+
+       if (messageText !== "" || file) {
+           if (messageText !== "") {
+               var newMessage = document.createElement('div');
+               newMessage.classList.add('message');
+               newMessage.innerHTML = '<span class="user">{{request.session.user}}:</span> <span class="text">' + messageText + '</span>';
+               chatContainer.appendChild(newMessage);
+               messageInput.value = "";
+               chatContainer.scrollTop = chatContainer.scrollHeight;
+           }
+
+           if (file) {
+               var reader = new FileReader();
+               reader.onload = function(e) {
+                   data['file'] = e.target.result;
+                   data['filename'] = file.name;
+
+                   let messageData = JSON.stringify(data);
+                   if (socket.readyState === WebSocket.OPEN) {
+                       socket.send(messageData);
+                   } else {
+                       console.log('WebSocket is closed. Queuing the message.');
+                       messageQueue.push(messageData);
+                   }
+               };
+               reader.readAsDataURL(file);
+           } else {
+               let messageData = JSON.stringify(data);
+
+               if (socket.readyState === WebSocket.OPEN) {
+                   socket.send(messageData);
+               } else {
+                   console.log('WebSocket is closed. Queuing the message.');
+                   messageQueue.push(messageData);
+               }
+           }
+       } else {
+           alert('Пустое значение!');
+       }
+   }
+</script>
+
+
+
+<div class="modal fade" id="chatsettings" tabindex="-1" aria-labelledby="chatsettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatsettingsModalLabel">Управление чатом</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning alert-dismissible fade show" style="display: none" role="alert">
+
+                    </div>
+
+                    {% if request.session.user == current_chat.creator.login %}
+                    <form action="/settings_chat" enctype="multipart/form-data" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="id_chat" value="{{current_chat.id}}">
+                        <div class="form-group">
+                            <label for="title">Заголовок</label>
+                            <input type="text" class="form-control" name="title" id="title" value="{{current_chat.title}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Описание</label>
+                            <input type="description" class="form-control" name="description" id="description" value="{{current_chat.description}}">
+                        </div>
+                         <div class="form-group">
+                             <div>
+                                 {% if current_chat.avatar != None %}
+                                 <img src="/media/{{current_chat.avatar}}" width="200px">
+                                 {% endif %}
+                             </div>
+                            <label for="avatar">Аватарка</label>
+                            <input type="file" class="form-control" id="avatar" name="avatar_chat">
+                        </div>
+                        <button type="submit">Изменить</button>
+                    </form>
+                    {% endif %}
+                    <h2>Участники</h2>
+                    <div class="container " id="users_online">
+                        {% for u in current_chat.users.all %}
+                            <div class="row">
+                                <div>
+                                    {% if u.avatar == None %}
+                                        <img src="/static/default.png" width="70px">
+                                    {% else %}
+                                        <img src="/media/{{u.avatar}}" width="70px">
+                                    {% endif %}
+                                </div>
+                                <div>{{u.login}}</div>
+                                <div>
+                                    &nbsp;&nbsp;&nbsp;
+                                    {{ u.update_at|date:"d.m.Y H:i" }}
+                                    {% if current_date == u.update_at|date:"Y-m-d" %}
+                                        {% if current_time == u.update_at|date:"H:i" %}
+                                            Online
+                                        {% endif %}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    let mediaRecorder;
+let audioChunks = [];
+
+document.getElementById('recordButton').addEventListener('click', async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    } else {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioChunks = [];
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    const audioBase64 = reader.result.split(',')[1];
+                    const audioElement = document.getElementById('audioPlayback');
+                    audioElement.src = reader.result;
+                    audioElement.style.display = 'block';
+
+                    const data = {
+                        message: '',
+                        user: '{{request.session.user}}',
+                        chat: {{current_chat.id}},
+                        file: `data:audio/wav;base64,${audioBase64}`,
+                        filename: 'audio_message.wav'
+                    };
+                    let messageData = JSON.stringify(data);
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(messageData);
+                    } else {
+                        messageQueue.push(messageData);
+                    }
+                };
+            };
+            mediaRecorder.start();
+        } else {
+            alert('Your browser does not support audio recording');
+        }
+    }
+});
+
+</script>
+{% endblock %}

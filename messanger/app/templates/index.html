@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Мессенджер{% endblock %}
+{% block content %}
+<!-- Главный раздел -->
+    <header class="jumbotron text-center">
+        <h1 class="display-4">Добро пожаловать в Мессенджер!</h1>
+        <p class="lead">Общайтесь с друзьями и коллегами легко и просто.</p>
+        <a href="#" class="btn btn-primary btn-lg">Начать</a>
+    </header>
+
+    <!-- Раздел функций -->
+    <section class="container my-5">
+        <div class="row">
+            <div class="col-md-4">
+                <h3>Мгновенные сообщения</h3>
+                <p>Отправляйте и получайте сообщения в режиме реального времени.</p>
+            </div>
+            <div class="col-md-4">
+                <h3>Групповые чаты</h3>
+                <p>Создавайте групповые чаты для общения с друзьями и коллегами.</p>
+            </div>
+            <div class="col-md-4">
+                <h3>Безопасность</h3>
+                <p>Ваши данные надежно защищены с использованием современных технологий шифрования.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Раздел загрузки -->
+    <section class="container text-center my-5">
+        <h2>Скачайте наше приложение</h2>
+        <p>Доступно на всех платформах</p>
+        <a href="#" class="btn btn-secondary btn-lg">Скачать для iOS</a>
+        <a href="#" class="btn btn-secondary btn-lg">Скачать для Android</a>
+    </section>
+
+
+
+    <!-- Модальное окно аутентификации -->
+    <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="authModalLabel">Войти</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning alert-dismissible fade show" style="display: none" role="alert">
+
+                    </div>
+                    <form>
+
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" placeholder="Введите email">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Пароль</label>
+                            <input type="password" class="form-control" id="password" placeholder="Введите пароль">
+                        </div>
+                        <a class="btn btn-primary" id="auth_btn" >Войти</a>
+                        <a class="btn btn-primary" id="reg_btn" >Регистрация</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+   /*const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+
+    socket.onopen = function(e) {
+      socket.send(JSON.stringify({
+        message: 'Hello from Js client'
+      }));
+    };
+
+    socket.onmessage = function(event) {
+      try {
+        console.log(event);
+      } catch (e) {
+        console.log('Error:', e.message);
+      }
+    };*/
+</script>
+{% endblock %}

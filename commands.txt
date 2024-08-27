@@ -1,0 +1,57 @@
+daphne -p 8000 asgi:application
+
+/*var chatContainer = document.getElementById('chatContainer');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    function sendMessage() {
+        var messageInput = document.getElementById('messageInput');
+        var messageText = messageInput.value.trim();
+        if (messageText !== "") {
+            var newMessage = document.createElement('div');
+            newMessage.classList.add('message');
+            newMessage.innerHTML = '<span class="user">{{request.session.user}}:</span> <span class="text">' + messageText + '</span>';
+            chatContainer.appendChild(newMessage);
+            messageInput.value = "";
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+            socket.onopen = function(e) {
+                socket.send(JSON.stringify({
+                    message: messageText, user: '{{request.session.user}}', chat: {{current_chat.id}}
+                }));
+            };
+        } else {
+            alert('Пустое значение!');
+        }
+    }
+
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+
+    socket.onmessage = function(event) {
+        /*var data = JSON.parse(event.data);
+        var newMessage = document.createElement('div');
+        newMessage.classList.add('message');
+        newMessage.innerHTML = '<span class="system">System:</span> <span class="text">' + data.message + '</span>';
+        chatContainer.appendChild(newMessage);
+        chatContainer.scrollTop = chatContainer.scrollHeight;*/
+        console.log(12);
+    };
+
+    function startSendingMessages() {
+        setInterval(function() {
+            timerSecFunc();
+        }, 1000);
+    }
+    socket.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+    function timerSecFunc() {
+        const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+        socket.onopen = function(e) {
+            socket.send(JSON.stringify({
+                message: 'list', chat: {{current_chat.id}}
+            }));
+        };
+    }
+
+    startSendingMessages();*/

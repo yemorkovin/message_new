@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+       body {
+            display: flex;
+        }
+        .sidebar {
+            min-width: 250px;
+            max-width: 250px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+        }
+        .sidebar a {
+            display: block;
+            padding: 0px 15px;
+            margin-bottom: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .sidebar a:hover {
+            background-color: #e2e6ea;
+            color: #0056b3;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a>User 1</a>
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#create_chat">Создать чат</a>
+        <a href="/profile" class="active">Профиль</a>
+
+        <a href="/settings">Настройки</a>
+        <a class="click_chat">Чат</a>
+        <ul>
+        {% for chat in chats %}
+            <li>
+                <a href="/chat/{{chat.id}}">
+                    {{chat.title|truncatechars:15}}
+                </a>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    <div class="content">
+        <div class="mt-5">
+            {% block content %} {% endblock %}
+        </div>
+    </div>
+
+
+
+   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+         $('.enter_click').keydown(function(e) {
+            if(e.keyCode === 13) {
+             sendMessage();
+            }
+        });
+
+        let m_2 = false;
+        $('.click_chat').on('click', function(){
+            if(m_2==false){
+                $(this).next().hide();
+                m_2=true;
+            }else{
+                $(this).next().hide();
+                m_2=false;
+            }
+        });
+    </script>
+</body>
+</html>
