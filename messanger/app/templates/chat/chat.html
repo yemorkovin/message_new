@@ -62,7 +62,7 @@
             <input type="file" class="form-control mt-3" name="file" id="file">
 
             <!-- New Record Button -->
-            <button class="btn btn-secondary mt-2" id="recordButton">🔴 Record</button>
+            <button class="btn btn-secondary mt-2" id="recordButton">🔴 Старт</button>
             <audio id="audioPlayback" controls style="display:none;"></audio>
 
             <button class="btn btn-primary mt-2" onclick="sendMessage()">Отправить</button>
@@ -84,7 +84,6 @@
                let queuedMessage = messageQueue.shift();
                socket.send(queuedMessage);
            }
-           setInterval(function() {
                if (socket.readyState === WebSocket.OPEN) {
                    socket.send(JSON.stringify({
                        message: 'list',
@@ -92,7 +91,6 @@
                        user: '{{request.session.user}}'
                    }));
                }
-           }, 1000);
        };
 
        socket_online.onopen = function(e) {
@@ -104,7 +102,7 @@
                        chat: {{current_chat.id}}
                    }));
                }
-           }, 1000);
+           }, 10000);
        };
 
        socket.onmessage = function(event) {
@@ -117,6 +115,7 @@
        };
 
        socket_online.onmessage = function(event) {
+
            let data = JSON.parse(event['data'])['message'];
            document.getElementById('users_online').innerHTML = data;
        };
